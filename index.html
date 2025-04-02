@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus 3D Map</title>
+    <script type="module" src="script.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info { position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.8); padding: 10px; font-size: 16px; }
+        .label {
+            position: absolute;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transform: translate(-50%, -50%);
+        }
+        #side-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            height: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Click on a building to see details</div>
+    <div id="label" class="label"></div>
+    <div id="side-panel">
+        <h3 id="panel-title">Location Info</h3>
+        <p id="panel-desc">Click a building to view details</p>
+    </div>
+</body>
+</html>
