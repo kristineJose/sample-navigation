@@ -1,122 +1,103 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from './node_modules/three/build/three.module.js';
+import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader.js';   
+import { XRButton } from 'three/examples/jsm/webxr/XRButton.js';
 
-let scene, camera, renderer, raycaster, mouse, selectedObject = null;
-const label = document.getElementById('label');
-const sidePanel = document.getElementById('side-panel');
-const panelTitle = document.getElementById('panel-title');
-const panelDesc = document.getElementById('panel-desc');
+// Initialize Scene, Camera, and Renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-function init() {
-    // Create Scene
-    scene = new THREE.Scene();
+// Enable WebXR
+renderer.xr.enabled = true;
+document.body.appendChild(XRButton.createButton(renderer));
 
-    // Set Up Camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 10);
+// Load 3D Campus Model
+const loader = new GLTFLoader();
+loader.load('./assets/Building_Updated.glb', function (gltf) {
+    scene.add(gltf.scene);
+}, undefined, function (error) {
+    console.error("Error loading 3D model:", error);
+});
 
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+// User Position (default)
+let userX = 0, userY = 1, userZ = 0;
 
-    // Light
-    const light = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(light);
+// Destination Options
+const destinations = {
+    "Library": { x: 5, y: 1, z: -3 },
+    "Cafeteria": { x: 10, y: 1, z: -5 },
+    "Laboratory": { x: -2, y: 1, z: -8 }
+};
 
-    // Load 3D Model
-    const loader = new GLTFLoader();
-    loader.load('assets/Building_Updated.glb', (gltf) => {
-        scene.add(gltf.scene);
-    });
+// Create Dropdown Menu
+const selectElement = document.createElement("select");
+selectElement.style.position = "absolute";
+selectElement.style.top = "10px";
+selectElement.style.left = "10px";
+selectElement.style.zIndex = "1000";
+document.body.appendChild(selectElement);
 
-    // Raycasting (for detecting clicks)
-    raycaster = new THREE.Raycaster();
-    mouse = new THREE.Vector2();
-
-    window.addEventListener('click', onMouseClick);
-    animate();
+// Populate Dropdown
+for (const key in destinations) {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = key;
+    selectElement.appendChild(option);
 }
+
+// Function to Update Path
+function updatePath(destination) {
+    scene.remove(scene.getObjectByName("pathCurve"));  // Remove old path
+    scene.remove(scene.getObjectByName("destinationMarker"));
+
+    const dest = destinations[destination];
+    
+    // Draw new path
+    const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(userX, userY, userZ),
+        new THREE.Vector3(dest.x, dest.y, dest.z)
+    ]);
+    
+    const points = curve.getPoints(50);
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    const curveObject = new THREE.Line(geometry, material);
+    curveObject.name = "pathCurve";
+    scene.add(curveObject);
+    
+    // Add Destination Marker
+    const destinationMarker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    );
+    destinationMarker.position.set(dest.x, dest.y, dest.z);
+    destinationMarker.name = "destinationMarker";
+    scene.add(destinationMarker);
+}
+
+// Listen for Destination Selection
+selectElement.addEventListener("change", (event) => {
+    updatePath(event.target.value);
+});
+
+// Set Initial Path
+updatePath(selectElement.value);
+
+// Set Initial Camera Position
+camera.position.set(0, 5, 10);
 
 // Animation Loop
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 }
+animate();
 
-// Handle Mouse Clicks
-function onMouseClick(event) {
-    // Convert mouse position to normalized device coordinates (-1 to +1)
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    // Raycasting
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
-
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-
-        // Reset previous selection
-        if (selectedObject && selectedObject.material) {
-            selectedObject.material.emissive.setHex(0x000000);
-        }
-
-        // Highlight new object
-        selectedObject = object;
-        if (selectedObject.material) {
-            selectedObject.material.emissive.setHex(0xff0000);
-        }
-
-        // Show Label Above Building
-        const locationName = object.name || "Unknown Location";
-        showLabel(event.clientX, event.clientY, locationName);
-
-        // Show Side Panel
-        showSidePanel(locationName);
-    } else {
-        // Hide label and panel when clicking outside
-        label.style.display = 'none';
-        sidePanel.style.display = 'none';
-    }
-}
-
-// Show Floating Label
-function showLabel(x, y, text) {
-    label.style.left = `${x}px`;
-    label.style.top = `${y - 30}px`;
-    label.innerText = text;
-    label.style.display = 'block';
-
-    setTimeout(() => {
-        label.style.display = 'none';
-    }, 2000);
-}
-
-// Show Side Panel with Information
-function showSidePanel(name) {
-    panelTitle.innerText = name;
-    panelDesc.innerText = `Details about ${name}. Click "Navigate" to go to AR view.`;
-
-    sidePanel.style.display = 'block';
-
-    // Add navigate button without removing panel elements
-    let button = document.createElement('button');
-    button.innerText = "Navigate";
-    button.onclick = () => navigateToAR(name);
-    
-    // Clear old buttons and add new one
-    let existingButton = sidePanel.querySelector('button');
-    if (existingButton) {
-        existingButton.remove();
-    }
-    sidePanel.appendChild(button);
-}
-
-// Redirect to AR View
-function navigateToAR(name) {
-    window.location.href = `ar-view.html?location=${encodeURIComponent(name)}`;
-}
-
-// Initialize
-init();
+// Get User Location (Indoor)
+navigator.geolocation.getCurrentPosition(position => {
+    console.log("User Location:", position.coords.latitude, position.coords.longitude);
+}, error => {
+    console.error("Geolocation error:", error);
+});
