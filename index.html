@@ -1,39 +1,71 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>GeoAR.js demo</title>
-    <script src='https://aframe.io/releases/0.9.2/aframe.min.js'></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D AR Wayfinding System</title>
+
+    <!-- Include A-Frame for AR/VR -->
+    <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.min.js"></script>
-    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+
+    <!-- Include Three.js and other required libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/jsm/webxr/XRButton.js"></script>
 
-    <script>
-        THREEx.ArToolkitContext.baseURL = 'https://raw.githack.com/jeromeetienne/ar.js/master/three.js/'
-    </script>
-    <script src="./script.js"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css"/>
-</head>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
 
-<body style='margin: 0; overflow: hidden;'>
-    <div class="centered instructions"></div>
-    <a-scene 
-        vr-mode-ui='enabled: false' 
+        #destinationSelect {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+
+        .centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .instructions {
+            font-size: 20px;
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AR Scene -->
+    <a-scene
+        vr-mode-ui="enabled: false"
         embedded
-        arjs='sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;'>
-    <a-camera gps-camera rotation-reader></a-camera>
-</a-scene>
-<div class="centered">
-    <button data-action="change"></button>
-</div>
-<select id="destinationSelect">
-    <option value="Library">Library</option>
-    <option value="Cafeteria">Cafeteria</option>
-    <option value="Laboratory">Laboratory</option>
-</select>
+        arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;">
+        <!-- Camera for AR -->
+        <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <!-- Dropdown for Destination Selection -->
+    <select id="destinationSelect">
+        <option value="Library">Library</option>
+        <option value="Cafeteria">Cafeteria</option>
+        <option value="Laboratory">Laboratory</option>
+    </select>
+
+    <!-- Instructions Section (Optional) -->
+    <div class="centered instructions">
+        <p>Choose a destination to navigate to.</p>
+    </div>
+
+    <script src="script.js"></script>
 
 </body>
+</html>
